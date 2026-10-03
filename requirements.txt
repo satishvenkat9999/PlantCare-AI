@@ -1,0 +1,19 @@
+# PlantCare AI - Python dependencies
+# Verified against: Python 3.10, streamlit 1.64.0, google-genai 2.27.0, twilio 9.11.2
+#
+# streamlit is floored at 1.48.0 because app.py uses the width parameter on
+# st.button/st.form_submit_button and the "tertiary" button type, which were
+# both introduced in 1.48.0.
+#
+# google-genai is floored above 1.51.0 (implied by >=2.20) because app.py sets
+# GenerateContentConfig.thinking_config with thinking_level, added in 1.51.0.
+# It is also pinned below 3.0.0 because the 3.x major release changes
+# automatic-function-calling behaviour (see the python-genai README).
+
+streamlit>=1.48,<2.0
+google-genai>=2.20,<3.0
+twilio>=9.0,<10.0
+
+# Used only to validate uploaded/captured photos and downscale very large
+# images before they are sent to Gemini. No computer-vision pipeline.
+pillow>=10.0
