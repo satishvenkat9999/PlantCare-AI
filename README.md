@@ -26,7 +26,7 @@ to WhatsApp. Nothing is stored on a server.
 5. **Follow-up questions** - suggested questions help you get started; after the
    first turn the app keeps its answers contextual to the same plant.
 6. **WhatsApp report** - one button turns the conversation into a report and
-   sends it to your number with Twilio's approved WhatsApp template.
+   sends it to your number as a regular WhatsApp message through Twilio.
 7. **Analyze New Plant / Start over** - a fresh Gemini conversation, or a full
    reset.
 
@@ -46,8 +46,10 @@ inferred and what simply cannot be determined from one picture.
 | `twilio` | 9.x |
 | `pillow` | 10 or newer |
 
-A Google AI Studio API key and a Twilio account with an approved WhatsApp
-sender and an approved WhatsApp content template are both required.
+A Google AI Studio API key and a Twilio account with a WhatsApp sender are both
+required. The report is sent as a regular WhatsApp message, so the recipient
+needs an open messaging window: they must have messaged the sender first, for
+example by sending a message to the Twilio WhatsApp Sandbox.
 
 ---
 
@@ -82,7 +84,12 @@ paste real keys into `README.md`, and never share it.
 | `TWILIO_ACCOUNT_SID` | Twilio Console | Twilio account |
 | `TWILIO_AUTH_TOKEN` | Twilio Console | Twilio authentication |
 | `TWILIO_WHATSAPP_FROM` | Twilio WhatsApp sender | The `whatsapp:+...` sender number |
-| `TWILIO_CONTENT_SID` | Twilio approved content template | The WhatsApp template used for the report |
+
+The report is sent as a regular WhatsApp message using Twilio's `body=`
+parameter, so no WhatsApp content template is needed. Because the message is not
+templated, Twilio only accepts it while the recipient has an active
+user-initiated messaging window - for example after they message the WhatsApp
+Sandbox. Outside that window the send fails.
 
 ### 3. Run the app
 
@@ -97,12 +104,21 @@ Camera capture needs a secure context, so it only works on `localhost` or on an
 first time. If you would rather not use the camera, the chat box accepts image
 uploads instead.
 
+### 4. Run the tests
+
+```bash
+python -m unittest test_app -v
+```
+
+The tests use only the standard library plus the app's own dependencies, so no
+API key and no network access are needed. Gemini and Streamlit are mocked.
+
 ---
 
 ## Deploying to Streamlit Community Cloud
 
 1. Push the repository to GitHub.
-2. In **App -> Settings -> Secrets**, add the five secrets listed above.
+2. In **App -> Settings -> Secrets**, add the four secrets listed above.
 3. Deploy. Streamlit runs `streamlit run app.py` for you.
 
 ---
@@ -112,6 +128,7 @@ uploads instead.
 ```
 app.py                       Streamlit UI, session state, Gemini and Twilio calls
 prompts.py                   every prompt and user-facing message
+test_app.py                  prompt-quality, helper and mocked-chat tests
 requirements.txt             pinned dependencies
 .streamlit/secrets.toml.example
 .gitignore
@@ -143,8 +160,8 @@ Two details worth knowing if you read the code:
 | Symptom | Fix |
 | --- | --- |
 | "PlantCare AI is not configured yet" | A required secret is missing. The message names the missing keys. |
-| Report button stays disabled | Chat about your plant first, and check that the four Twilio secrets are set. |
-| Report says it could not be sent | The template `TWILIO_CONTENT_SID` must be an **approved** WhatsApp template, and the destination must be verified for the sandbox. |
+| Report button stays disabled | Chat about your plant first, and check that the three Twilio secrets are set. |
+| Report says it could not be sent | The recipient has no open messaging window. Have them send an inbound message to the sender first (for example the WhatsApp Sandbox), then try again. |
 | Camera does not open | Use `localhost` or `https`, and allow camera permission. Otherwise upload a photo instead. |
 | Gemini says it cannot read the photo | Re-take the photo in good light, closer, with the whole plant in frame. |
 

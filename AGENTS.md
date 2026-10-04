@@ -50,7 +50,11 @@ Required Streamlit secret names (read from `st.secrets`, never hardcoded):
 | `TWILIO_ACCOUNT_SID` | Twilio account |
 | `TWILIO_AUTH_TOKEN` | Twilio auth |
 | `TWILIO_WHATSAPP_FROM` | Approved WhatsApp sender |
-| `TWILIO_CONTENT_SID` | Approved WhatsApp content template |
+
+The report is sent as a regular WhatsApp message with Twilio's `body=`
+parameter, not as an approved content template. Because it is not templated, the
+recipient must have an active user-initiated messaging window (for example after
+messaging the WhatsApp Sandbox); outside that window Twilio rejects the send.
 
 - Only `.streamlit/secrets.toml.example` is tracked. Never create or commit
   `.streamlit/secrets.toml`.
@@ -69,10 +73,19 @@ PlantCare AI gives **image-based guidance, never a professional diagnosis**.
 3. Never invent symptoms, species, diseases, measurements, chemical
    concentrations, lab results, or certifications.
 4. Never give exact watering volumes/schedules as facts.
-5. Reject blurry, dark, empty, or non-plant images politely and ask for a
+5. Never invent a number of any kind: no percentages, probabilities,
+   statistics, ratios, rankings, or exact quantities, not even as hedged
+   estimates such as "about 90%". A number is allowed only when the user
+   supplied it, it is clearly readable in the photo/text, or it is quoted from
+   a product label. Use words ("most of the plant", "a few spots") instead.
+6. Never describe soil as damp/dry/wet from a photo alone unless the surface
+   condition is unmistakably visible; teach the user how to check instead.
+7. Prefer "based on what is visible", "worth checking first", "may be a
+   contributing factor" over a single confident explanation.
+8. Reject blurry, dark, empty, or non-plant images politely and ask for a
    clearer photo.
-6. No dangerous chemical-mixing instructions or unsafe pesticide dosages.
-7. Redirect non-plant questions back to plant care.
+9. No dangerous chemical-mixing instructions or unsafe pesticide dosages.
+10. Redirect non-plant questions back to plant care.
 
 These rules live in `prompts.py` (`SYSTEM_PROMPT`), not in `app.py`.
 
@@ -114,6 +127,7 @@ Streamlit re-executes the script on every interaction. Therefore:
 ```
 app.py
 prompts.py
+test_app.py
 requirements.txt
 README.md
 .gitignore
@@ -125,6 +139,7 @@ No other folders unless there is a concrete reason.
 
 ## 9. Verification before finishing
 
-Run at least: `python -m compileall`, import checks, helper-function tests,
+Run at least: `python -m unittest test_app -v` (covers the prompt rules, the
+helpers and the mocked follow-up turn), `python -m compileall`, import checks,
 a missing-secrets check, a secret-pattern scan of tracked files, and
 `streamlit run app.py` to confirm the app boots without a Python exception.

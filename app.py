@@ -8,7 +8,6 @@ report to the user's own WhatsApp number through Twilio.
 from __future__ import annotations
 
 import copy
-import json
 import logging
 import re
 from io import BytesIO
@@ -48,7 +47,6 @@ TWILIO_SECRETS = [
     "TWILIO_ACCOUNT_SID",
     "TWILIO_AUTH_TOKEN",
     "TWILIO_WHATSAPP_FROM",
-    "TWILIO_CONTENT_SID",
 ]
 
 ALLOWED_IMAGE_TYPES = ["jpg", "jpeg", "png"]
@@ -413,25 +411,28 @@ def send_report_to_whatsapp() -> None:
 
 
 def send_whatsapp(to_number: str, user_name: str, summary: str) -> None:
-    """Send the report with the approved Twilio WhatsApp content template."""
+    """Send the report as a regular WhatsApp text message through Twilio.
+
+    Uses the plain ``body`` parameter instead of an approved content template,
+    which only works while the WhatsApp Sandbox 24-hour window is open (the
+    user must have sent an inbound message first).
+    """
     account_sid = load_secret("TWILIO_ACCOUNT_SID")
     auth_token = load_secret("TWILIO_AUTH_TOKEN")
     whatsapp_from = load_secret("TWILIO_WHATSAPP_FROM")
-    content_sid = load_secret("TWILIO_CONTENT_SID")
-    if not all([account_sid, auth_token, whatsapp_from, content_sid]):
+    if not all([account_sid, auth_token, whatsapp_from]):
         raise RuntimeError("Twilio is not configured")
 
     client = get_twilio_client(account_sid, auth_token)
+    # Same Gemini-output cleanup as before, just placed in the message body.
+    body = (
+        f"Hello {clean_whatsapp_text(user_name, max_chars=40)}, here is your "
+        f"PlantCare AI report: {clean_whatsapp_text(summary)}"
+    )
     message = client.messages.create(
-        content_sid=content_sid,
+        body=body,
         to=to_whatsapp_address(to_number),
         from_=whatsapp_from,
-        content_variables=json.dumps(
-            {
-                "1": clean_whatsapp_text(user_name, max_chars=40),
-                "2": clean_whatsapp_text(summary),
-            }
-        ),
     )
 
     status = str(getattr(message, "status", "") or "").lower()
